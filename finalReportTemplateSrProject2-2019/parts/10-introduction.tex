@@ -1,0 +1,43 @@
+%======================================================================
+\chapter{Introduction}
+\label{sec:introductionAreaCoverageOptimization}
+%======================================================================
+
+
+\section{Background Study} %review of literature and prior work
+%========================================================================================
+%   BACKGROUND STUDY   %
+%========================================================================================
+Many papers have been published on algorithms requiring multi\-agent systems to optimize area coverage. However, few of these works describe a flexible framework that provides the means to achieve such a coverage task. 
+
+Authors in~\cite{Kilinc2015} Kilinic attempts to optimize area coverage of an interconnected network of sensors and actuators that act as a control system. Kilinic’s goal is to maximize the area coverage of the wireless network control system (WNCS) whilst still maintaining convergence of the system in a large environment. Possible applications for the such a control system include smart grid, automatic management and navigation systems.  
+
+The system is arranged in several heterogeneous subnetworks that communicate ad-hoc.  A single packet of information will hop multiple times through the network until it reaches the Kalman filter. Each of the subnetworks has a connection to the Kalman filter whilst remaining separate from each other. The Kalman filter is used to account for asymmetric packet arrival times as well as packet loss.  
+
+In \cite{Lee2015} Lee attempts to optimize the area of a given region of interest for a time variant density. Dynamic density coverage has additional application compared to static density coverage. An example of this additional utility can be seen in a search and rescue scenario where the probability of a missing person being found in a particular area is time variant. 
+
+Lee’s algorithm works by using voronoi regions and a robotic cost function to determine area coverage. Each robot is responsible for covering a particular voronoi region. Time information is used in the robot movement to account for the rapid changes in the density functions. 
+
+In \cite{Miah2018} Miah adapts previous attempts of area coverage by using a fleet of heterogeneous modular cost-effective robots in real time. This allows for heterogeneous or non-uniform resource allocation and stabilizes the algorithm to allow for variation in the abilities of the constituent robots. 
+
+The algorithm in Miah’s research is very similar to that of Lee’s. Miah adds additional consideration for the robot actuation limitations for a heterogeneous case whilst Lee does not. Each individual robot is given a coverage metric to describe its area coverage performance. 
+
+In “Sensing and coverage for a network of heterogeneous robots” \cite{Pimenta2009} Pimenta is attempting to adapt the area coverage model for intruder tracking. Multiple intruders in a specified region can be tracked using this method even if their location is unknown. The coverage is optimized and therefore the probability or detecting any existing intruders in the area is also maximized.  
+
+Pimenta’s algorithm allows an individual robot to track an intruder in its Voronoi cell whilst the other robots respond to provide optimal area coverage. When an intruder is located within a given distance from a robot it will trigger that particular robot to follow the intruder. 
+
+In \cite{Varposhti2016} Varposhti uses area coverage optimization to distribute mobile directional sensors over an area. The sensors can move around freely and can adapt in the case of an outage in a particular area. Such networks can be used in target tracking, search and rescue, and surveillance. 
+
+Varposhti uses a distributed learning algorithm to achieve area coverage in his research. Each sensor collaborates with its neighbors to determine the best position and orientation for each sensor. Each sensor moves in a random direction and turns in a random position until the coverage is maximized. 
+
+In \cite{Yu2018} Yu attempts to find the optimal area coverage for deployable reconnaissance sensors. His approach involves considering the areas in which the sensors can be deployed, the connectivity and the coverage. Such an algorithm provides the ability to deploy sensors almost anywhere for the purpose of surveillance and intelligence. 
+
+Yu’s algorithm uses genetic neural networks and particle swarm optimization to achieve optimal deployment. In the genetic algorithm the best performing configurations are passed on to the next generation whilst the poorly performing configurations are slowly phased out. Additionally a mutation rate is maintained to allow for other behavior that was not previously available in an older generation. 
+
+  
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../finalReportMainV1"
+%%% End:
