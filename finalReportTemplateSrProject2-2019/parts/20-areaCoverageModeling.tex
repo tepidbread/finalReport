@@ -1,6 +1,163 @@
 \chapter{Modeling Area Coverage Optimization}
 \label{chap:areaCoverageModeling}
 
+
+%======================================================================
+\section{Modelling}
+%======================================================================
+Even though a circular shaped differential-drive mobile robot was used to conduct the simulations and experiments for this project, the kinematic model of an Ackermann steering vehicle operating on a ground–fixed inertial reference frame X-Y was considered.  This is done so the proposed area coverage algorithm can be applied to any similar robotic vehicles.  Let 
+\begin{align}
+    q_{k,r} = [x_k, y_k, \theta_k]^T
+\end{align}
+\label{eq:poseModel}
+
+denote the pose (position and orientation) vector of the robot at time $t\geq0$ with $t=kT$, $k~\epsilon~N_0$, the subscript $r$ in $q_{k,r}$, indicating the robot’s pose, and $T>0$ being the sampling time. The robot’s discrete-time model is approximated by the first-order Euler integration given by
+
+\begin{subequations}
+\begin{align}
+    x_{k+1} &= x_k+Tνkcos(\theta_k+\gamma_k), \\
+    y_{k+1} &= y_k+Tνksin(\theta_k+\gamma_k), \\
+    \theta_{k+1} &= \theta_k+Tνk\frac{sin(\gamma_k)}{l}
+\end{align}
+\label{eq:eulerModel}
+\end{subequations}
+
+where $\gamma_k~\epsilon~(−\frac{\pi}{2},\frac{\pi}{2})$ is the front wheel steering angle with respect to the robot’s orientation $\theta_k~\epsilon~[−\pi,\pi)$, $v_k$ is the linear speed, and $l$ is the distance between the drive wheels of the robot. A compact form of equation \ref{eq:poseModel} can be written as
+
+\begin{align}
+    q_{k+1,r}=f_r(q_k,r,u_k)
+\end{align}
+\label{eq:compactModel}
+
+ and its kinematic model is described by a unicycle model: %
+%
+\begin{subequations}
+\begin{align}
+\dot x(t) &= \nu(t)\cos\theta(t)\\
+\dot y(t) &= \nu(t)\sin\theta(t)\\
+\dot\theta(t) &= \omega(t).
+\end{align}
+\label{eq:unicycleModel}
+\end{subequations}
+%
+where ${\bf q}(t) \equiv [x(t),~y(t),~\theta(t)]^T\in\mathbb{R}^2\times\mathbb{S}^1$ is the eduMOD's pose, and $\nu(t)$ and $\omega(t)$ are its linear and angular speeds at time $t\ge 0,$  respectively.
+%
+Note that the lower level actuator commands $\nu(t)$ and $\omega(t)$ are implemented at high bandwidth using a dead-reckoning algorithm in cooperation with a conventional proportional-integral-derivative (PID) controller. Further note that the robots used to implement these algorithms have no way of externally verifying their position. If the wheels have any slippage, or if the robots runs into any barriers, the dead reckoning algorithm cannot correct itself. This is particularly noticeable on the eduMOD as the robot is not as mechanically robust as its counterparts and is relatively small. In regards to the size, if the robot is off its target by even a few centimeters, it will be almost an entire wheelbase away from its target. If the Pioneer robot was to be off by a few centimeters the difference would appear far less striking. In the following, two different examples using eduMOD robots/agents are provided. 
+
+
+\todo[inline]{CHANGE THE LANGUAGE HERE TO REFLECT THE FACT THAT THIS IS THE FINAL REPORT}
+
+The following sub-sections will cover the work we have done so far. This includes the modelling of algorithm, its derivation, system simulation results in MATLAB, current and future design decisions, and some experiments we have run in the lab.\\
+ 
+ We began this work by looking at the project previously conducted and attempting to simulate their results in MATLAB from scratch. To start, we developed a way to map a set density to a square area. For this we represented any x-y coordinate within the square area as the set \textbf{q}. Furthermore, we assigned \begin{math}\mathbf{\bar{q}}\end{math} to be the desired point for that agent to travel to in order to maximize coverage. As an example:
+\begin{align}
+    \mathbf{\bar{q}} = \begin{bmatrix} \bar{x} \\ \bar{y} \end{bmatrix} 
+    \label{eq:d_q_1}
+\end{align}
+The phi function is the measure of the density at any given point \textbf{q}. Through simplification it can be seen that:
+\begin{align}
+    \phi(\mathbf{q}) = exp(\frac{-0.5*norm(\mathbf{q - \bar{\mathbf{q}}})^2}{\sigma^2})
+    \label{eq:d_q_2}
+\end{align}
+The variable $\sigma$ seen in Equation~\eqref{eq:d_q_2} represents how the density is spread throughout the area. A larger $\sigma$ denotes a larger spread of density. Further simplification yields:
+\begin{align}
+    \phi(\mathbf{q}) = exp(\frac{-0.5*norm(\begin{bmatrix} x \\ y \end{bmatrix} - \begin{bmatrix} \bar{x} \\ \bar{y} \end{bmatrix})^2}{\sigma^2}) \\
+    \label{eq:d_q_3}
+    \phi(\mathbf{q}) = exp(\frac{-0.5*norm((x-\bar{x})^2 + (y-\bar{y})^2)}{\sigma^2})
+\end{align}
+See figure~\ref{fig:voronoiRegions} for an example of the square area we are attempting to map. 
+
+%\todo[inline]{Add colors to this figure to differentiate the Voronoi regions}
+
+\begin{figure} [H]
+    \centering
+    \includegraphics{figs/IPE/voronoiRegions.eps}
+    \caption{Plot of agents in their respective Voronoi cells}
+    \label{fig:voronoiRegions}
+\end{figure}
+
+This square area has been divided up into i Voronoi regions, for i number of agents operating in this area. These regions are represented in figure~\ref{fig:voronoiRegions} as V1, V2, and V3. In our case we are using three agents, though note that this number is somewhat arbitrary and can be scaled to any reasonable number. \\
+\\
+A Voronoi region is a partition of a plane such that all points within the partition's boundary must be closer to points within its boundary than to points outside. As such, the regions themselves must be convex two dimensional shapes. Therefore, the Voronoi regions represent a specific area covered by each agent within the region. \\
+\\ 
+The density function itself is applied to each x-y coordinate in the square area. Figure~\ref{fig:contour3Density} shows how a single density region is represented in three-dimensional space.
+%\todo[inline]{Add grid to this picture}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figs/Matlab/contour3Density.eps}
+    \caption{Density distribution centered at point (50,85)m.}
+    \label{fig:contour3Density}
+\end{figure}
+
+%=========================================================================
+Now that we had an idea of the how we would represent density we began looking at we would address the concept of coverage in our system. \\
+
+Dr. Miah provided us with a derivation for coverage that I will detail here. The area coverage metric $H$ in our system for i number of agents is defined as:
+\begin{align}
+ H = \displaystyle\sum_{i=1}^{n} \int_{V_i} \phi(\mathbf{q}) f(r_{i}^2) \mathrm{d}{\cal Q}   
+\end{align}
+Where $f(r_{i}^2)$ is a function that models sensor characteristics.
+\begin{align}
+    f(r_{i}^2) = \alpha*e^{-\beta r_{i}^2}
+\end{align}
+Note that alpha and beta from the above represent ideal sensor parameters that we are not interested in modelling exactly. Our goal is to find a point in each Voronoi region ${\mathbf{p}}^{[i]}$ such that $H$ is maximized. In order to do such we first find $\frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}}$ and set it to zero. 
+\\
+For that let us define an individual case:
+\begin{align}
+    H_{i} = \int_{V_i} \phi(\mathbf{q}) f(r_{i}^2) \mathrm{d}{\cal Q}.
+\end{align}
+First let us take the derivative:
+\begin{align}
+    \frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}} = \frac{\mathrm{d}}{\mathrm{d}\mathbf{p}^{[i]}} \displaystyle\sum_{i=1}^{n} H_i = \displaystyle\sum_{i=1}^{n} \int_{V_i} f(r_{i}^2) \phi(\mathbf{q}) \mathrm{d}{\cal Q}
+    \label{eq:d_H_4}
+\end{align}
+As the derivative of the coverage metrics $\displaystyle\sum_{i=1}^{n}H_i$ is zero at all other indices other than the current agent index $i$, we can ignore those values and further simplify Equation~\eqref{eq:d_H_4}.
+\begin{align}
+    \frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}} = \frac{\mathrm{d}H_i}{\mathrm{d}\mathbf{p}^{[i]}} = \frac{\mathrm{d}}{\mathrm{d}\mathbf{p}^{[i]}} \int_{V_i} f(r_{i}^2) \phi(\mathbf{q}) \mathrm{d}{\cal Q} = \int_{V_i} \frac{\mathrm{d}f({r_i}^2)}{\mathrm{d}{r_i}^2} \frac{\mathrm{d}{r_i}^2}{\mathbf{p}^{[i]}} \phi(\mathbf{q})\mathrm{d}{\cal Q}
+    \label{eq:d_H_5}
+\end{align}
+After the algebraic manipulation of derivative variables, note that we can find the derivative of the introduced range:
+\begin{align}
+    \frac{\mathrm{d}{r_i}}{\mathrm{d}\mathbf{p}^{[i]}} = \frac{\mathrm{d}}{\mathrm{d}\mathbf{p}^{[i]}}\sqrt{(x-{x}^{[i]]})^2 + (y-{y}^{[i]]})^2}
+    \label{eq:d_ri_6}
+\end{align}
+The function is then squared in order to simplify the derivative calculation:
+\begin{align}
+    \frac{\mathrm{d}{{r_i}^2}}{\mathrm{d}\mathbf{p}^{[i]}} = \frac{\mathrm{d}}{\mathrm{d}\mathbf{x}^{[i]}\mathrm{d}\mathbf{y}^{[i]}}[(x-{x}^{[i]})^2 + (y-{y}^{[i]})^2] = (-2x+{x}^{[i]}) + (-2y+{y}^{[i]}) = -2(\mathbf{q} - \mathbf{p}^{[i]})
+    \label{eq:d_ri2_7}
+\end{align}
+Using Equations~\eqref{eq:d_ri_6} and \eqref{eq:d_ri2_7}, we are able to simplify Equation~\eqref{eq:d_H_5} even further:
+\begin{align}
+    \frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}} = \int_{V_i} [-2 \phi(\mathbf{q}) \frac{\mathrm{d}f}{\mathrm{d}{r_i}^2}](\mathbf{q} - \mathbf{p^{[i]}}) \mathrm{d}{\cal Q}
+    \label{eq:d_H_8}
+\end{align}
+The quantity $[-2 \phi(\mathbf{q}) \frac{\mathrm{d}f}{\mathrm{d}{r_i}^2}]$ shown in Equation~\eqref{eq:d_H_8} is introduced as the modified $\phi(\mathbf{q})$ function. This function takes into account the sensor parameters. We call this new function $\Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]})$. From Equation~\eqref{eq:d_H_8}:
+\begin{align}
+    \frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}} = \int_{V_i} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) (\mathbf{q} - \mathbf{p}^{[i]}) \mathrm{d}{\cal Q}
+    \label{eq:d_H_9}
+\end{align}
+Using properties of integrals, we split the integral into two:
+\begin{align}
+    \frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}} = \int_{V_i} \mathbf{q} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q} - \mathbf{p}^{[i]} \int_{V_i} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q}
+    \label{eq:d_H_10}
+\end{align}
+Finally, we make an algebraic substitution and compare this equation to the mass and centroid equations previously discussed:
+\begin{align}
+    \frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}} = \int_{V_i} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q} \frac{\int_{V_i} \mathbf{q} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q}}{\int_{V_i} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q}} - \mathbf{p}^{[i]} \int_{V_i} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q}
+    \label{eq:d_H_11}
+\end{align}
+We know that the mass is defined as the integral of our density function relative to a bounded area $V_i$. As such the modified mass is expressed as $\Tilde{M_{V_i}} =  \int_{V_i} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q}$. The modified centroid is expressed as any point within the bounded area scaled by our modified $\Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]})$ function. We call it $\Tilde{C_{V_i}} = \frac{\int_{V_i} \mathbf{q} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q}}{\int_{V_i} \Tilde{\phi}(\mathbf{q},\mathbf{p}^{[i]}) \mathrm{d}{\cal Q}}$.
+\\
+Therefore we can express:
+\begin{align}
+    \frac{\mathrm{d}H}{\mathrm{d}\mathbf{p}^{[i]}} = \Tilde{M_{V_i}} \Tilde{C_{V_i}}-\mathbf{p}^{[i]} \Tilde{M_{V_i}} = 0 \\
+    \Tilde{M_{V_i}}(\Tilde{C_{V_i}} - \mathbf{p}^{[i]}) = 0 \\
+    \Tilde{C_{V_i}} = \mathbf{p}^{[i]}
+\end{align}
+In conclusion, as the mass can not be zero, the coverage is maximized when the position of the agent is equal to the modified centroid of a bounded area.
+
+
+
 \section{Introduction}
 \label{sec:introAreaCoverageModeling}
 
