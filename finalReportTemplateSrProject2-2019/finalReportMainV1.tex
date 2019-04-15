@@ -190,11 +190,17 @@ Area Coverage Optimization
 % % Designate with \appendix declaration which just changes numbering style 
 % % from here on
 % % Add a title page before the appendices and a line in the Table of Contents
-% \chapter*{APPENDICES}
-% \addcontentsline{toc}{chapter}{APPENDICES} 
-% %
-% \input{parts/appendix-help} %"Sources of Information and Help"
-% \input{parts/appendix-matlab} %"Matlab Code for Making a PDF Plot"
+\chapter*{APPENDICES}
+\addcontentsline{toc}{chapter}{APPENDICES} 
+
+\input{parts/appendix-implement} 	%
+\input{parts/appendix-implement-code} % Code used in implementation
+
+\input{parts/appendix-simulation}	%
+\input{parts/appendix-simulation-code} % Code used in simulation
+
+\input{parts/appendix-modelling}		% Matlab modelling etc...
+
 
 % %----------------------------------------------------------------------
 % % END MATERIAL
